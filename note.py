@@ -43,6 +43,7 @@ def add(eng,tab,tagtbl,title,code,taglist):
 
     ins = tagtbl.insert()
     for tag in taglist:
+        print 'add tag ',tag
         _ins=ins.values(tag=tag,code_no=code_no)
         _ins.compile().params
         r = conn.execute(_ins)
@@ -52,9 +53,29 @@ def list_note(tab):
 
     conn = eng.connect()
     r = conn.execute(s)
+    print '..'
     for row in r:
-        print row[0],row[1]
+        print row[0],row[1],row[3]
 
+def list_one_note(tab,tagtbl,code_no):
+    s = sqlalchemy.sql.select([tab]).where(tab.c.code_no==code_no)
+
+    conn = eng.connect()
+    r = conn.execute(s)
+    row = r.fetchone()
+    print row[0]
+    print row[1]
+    print row[2]
+    print row[3]
+
+    s = sqlalchemy.sql.select([tagtbl]).where(tagtbl.c.code_no==code_no)
+    conn = eng.connect()
+    r = conn.execute(s)
+    print "Tags: "
+    for row in r:
+        print row[1]
+
+    print '..'
 
 def query(tab):
     s = sqlalchemy.sql.select([tab])
@@ -64,10 +85,36 @@ def query(tab):
     for row in r:
         print row
 
-eng,codetbl,taglist = init("foo.db")
+def new_note():
+    title = raw_input("title :")
+    content = raw_input("content :")
+    tag_list = []
+    while True:
+        tag = raw_input("tag(type q to end):")
+        if tag == 'q':
+            break
+        tag_list.append(tag)
 
-add(eng,codetbl,taglist,"123",'test',['1','2'])
+    return title,content,tag_list
 
-query(codetbl)
-query(taglist)
-list_note(codetbl)
+eng,codetbl,tagtbl = init("foo.db")
+
+print "1. new note"
+print "2. list"
+ch = raw_input(":")
+if ch == '1':
+    title,content,tag_list = new_note()
+    print title,content,taglist
+    #add(eng,codetbl,taglist,"123",'test',['1','2'])
+    add(eng,codetbl,tagtbl,title,content,tag_list)
+elif ch == '2':
+
+    #query(codetbl)
+    #query(taglist)
+    list_note(codetbl)
+    ch = raw_input('choose :')
+    try:
+        ich = int(ch)
+        list_one_note(codetbl,tagtbl,ich)
+    except:
+        print 'choice error'
