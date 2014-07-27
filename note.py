@@ -57,6 +57,22 @@ def list_note(tab):
     for row in r:
         print row[0],row[1],row[3]
 
+def list_tag(tab):
+    s = sqlalchemy.sql.select([tab])
+
+    conn = eng.connect()
+    r = conn.execute(s)
+    print '..'
+    tag_list = {} # tag tag_count
+    for row in r:
+        if tag_list.has_key(row['tag']) == True:
+            tag_list[row['tag']]+=1
+        else:
+            tag_list[row['tag']]=1
+        #print row['no'],row['tag']
+
+    for t in tag_list:
+        print t,tag_list[t]
 def list_one_note(tab,tagtbl,code_no):
     s = sqlalchemy.sql.select([tab]).where(tab.c.code_no==code_no)
 
@@ -100,7 +116,8 @@ def new_note():
 eng,codetbl,tagtbl = init("foo.db")
 
 print "1. new note"
-print "2. list"
+print "2. list note"
+print "3. list tag"
 ch = raw_input(":")
 if ch == '1':
     title,content,tag_list = new_note()
@@ -118,3 +135,5 @@ elif ch == '2':
         list_one_note(codetbl,tagtbl,ich)
     except:
         print 'choice error'
+elif ch == '3':
+    list_tag(tagtbl)
