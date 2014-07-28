@@ -48,6 +48,20 @@ def add(eng,tab,tagtbl,title,code,taglist):
         _ins.compile().params
         r = conn.execute(_ins)
 
+def modify(eng,tab,tagtbl,code_no,title,code,taglist):
+
+    conn = eng.connect()
+    stmt = tab.update().where(tab.c.code_no == code_no).values(title=title,code=code)
+    r = conn.execute(stmt)
+
+#    ins = tagtbl.insert()
+#    for tag in taglist:
+#        print 'add tag ',tag
+#        _ins=ins.values(tag=tag,code_no=code_no)
+#        _ins.compile().params
+#        r = conn.execute(_ins)
+
+
 def list_note(tab):
     s = sqlalchemy.sql.select([tab])
 
@@ -148,7 +162,18 @@ while True:
     elif ch == '3':
         list_tag(tagtbl)
     elif ch == '4':
-        pass
+        list_note(codetbl)
+        ch = raw_input('choose :')
+        ich = int(ch)
+        try:
+            ich = int(ch)
+        except:
+            print 'delete choice error'
+        #modify input        
+        title,content,tag_list = new_note()
+
+        modify(eng,codetbl,tagtbl,ich,title,content,tag_list)
+
     elif ch == '5':
         list_note(codetbl)
         ch = raw_input('choose :')
