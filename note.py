@@ -93,6 +93,12 @@ def list_one_note(tab,tagtbl,code_no):
 
     print '..'
 
+def delete_note(eng,codetbl,tagtbl,code_no):
+
+    conn = eng.connect()
+    r = conn.execute(codetbl.delete().where(codetbl.c.code_no == code_no))
+    r = conn.execute(tagtbl.delete().where(tagtbl.c.code_no == code_no))
+
 def query(tab):
     s = sqlalchemy.sql.select([tab])
 
@@ -115,25 +121,43 @@ def new_note():
 
 eng,codetbl,tagtbl = init("foo.db")
 
-print "1. new note"
-print "2. list note"
-print "3. list tag"
-ch = raw_input(":")
-if ch == '1':
-    title,content,tag_list = new_note()
-    print title,content,taglist
-    #add(eng,codetbl,taglist,"123",'test',['1','2'])
-    add(eng,codetbl,tagtbl,title,content,tag_list)
-elif ch == '2':
+while True:
+    print "1. new note"
+    print "2. list note"
+    print "3. list tag"
+    print "4. modify"
+    print "5. delete"
+    print "q to quit"
+    ch = raw_input(":")
+    if ch == '1':
+        title,content,tag_list = new_note()
+        print title,content,tag_list
+        #add(eng,codetbl,taglist,"123",'test',['1','2'])
+        add(eng,codetbl,tagtbl,title,content,tag_list)
+    elif ch == '2':
 
-    #query(codetbl)
-    #query(taglist)
-    list_note(codetbl)
-    ch = raw_input('choose :')
-    try:
+        #query(codetbl)
+        #query(taglist)
+        list_note(codetbl)
+        ch = raw_input('choose :')
+        try:
+            ich = int(ch)
+            list_one_note(codetbl,tagtbl,ich)
+        except:
+            print 'choice error'
+    elif ch == '3':
+        list_tag(tagtbl)
+    elif ch == '4':
+        pass
+    elif ch == '5':
+        list_note(codetbl)
+        ch = raw_input('choose :')
         ich = int(ch)
-        list_one_note(codetbl,tagtbl,ich)
-    except:
-        print 'choice error'
-elif ch == '3':
-    list_tag(tagtbl)
+        try:
+            ich = int(ch)
+        except:
+            print 'delete choice error'
+
+        delete_note(eng,codetbl,tagtbl,ich)
+    elif ch == 'q':
+        break
