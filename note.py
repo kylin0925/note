@@ -1,58 +1,66 @@
 import sqlalchemy
 import hashlib
 import time
-def init(db_name):
-    eng = sqlalchemy.create_engine('sqlite:///' + db_name,echo=False)
-    metadata = sqlalchemy.MetaData()
-    codetbl = sqlalchemy.Table(
-        'codetbl',
-        metadata,
-        sqlalchemy.Column('code_no',sqlalchemy.Integer,primary_key=True),
-        sqlalchemy.Column('title',sqlalchemy.String),
-        sqlalchemy.Column('code',sqlalchemy.String),
-        sqlalchemy.Column('date',sqlalchemy.String))
+class note:
+    eng = None
+    codetbl = None
+    taglist = None
+    def init(self,db_name):
+        self.eng = sqlalchemy.create_engine('sqlite:///' + db_name,echo=False)
+        metadata = sqlalchemy.MetaData()
+        self.codetbl = sqlalchemy.Table(
+            'codetbl',
+            metadata,
+            sqlalchemy.Column('code_no',sqlalchemy.Integer,primary_key=True),
+            sqlalchemy.Column('title',sqlalchemy.String),
+            sqlalchemy.Column('code',sqlalchemy.String),
+            sqlalchemy.Column('date',sqlalchemy.String))
 
-    taglist = sqlalchemy.Table(
-        'taglist',
-        metadata,
-        sqlalchemy.Column('no',sqlalchemy.Integer,primary_key=True),
-        sqlalchemy.Column('tag',sqlalchemy.String),
-        sqlalchemy.Column('code_no',sqlalchemy.Integer),
-        )
-    metadata.create_all(eng)
-    return eng,codetbl,taglist
+        self.taglist = sqlalchemy.Table(
+            'taglist',
+            metadata,
+            sqlalchemy.Column('no',sqlalchemy.Integer,primary_key=True),
+            sqlalchemy.Column('tag',sqlalchemy.String),
+            sqlalchemy.Column('code_no',sqlalchemy.Integer),
+            )
+        metadata.create_all(self.eng)
+        #return eng,codetbl,taglist
 
-def max_code_no(tab):
-    s = sqlalchemy.sql.select([sqlalchemy.func.max(tab.c.code_no)])
+    def max_code_no(self):
+        s = sqlalchemy.sql.select([sqlalchemy.func.max(self.codetbl.c.code_no)])
 
-    conn = eng.connect()
-    r = conn.execute(s)
-    c = r.fetchone()
-    if c[0] == None:
-        return 0
-    else:
-        print "count ",c[0]
-        return c[0]
-def add(eng,tab,tagtbl,title,code,taglist):
-    code_no = max_code_no(tab) + 1
-    date = time.strftime("%Y-%m-%d %H:%M:%S")
-    ins = tab.insert().values(title=title,code=code,date=date)
-    ins.compile().params
-    conn = eng.connect()
-    r = conn.execute(ins)
+        conn = self.eng.connect()
+        r = conn.execute(s)
+        c = r.fetchone()
+        if c[0] == None:
+            return 0
+        else:
+            print "count ",c[0]
+            return c[0]
 
-    ins = tagtbl.insert()
-    for tag in taglist:
-        print 'add tag ',tag
-        _ins=ins.values(tag=tag,code_no=code_no)
-        _ins.compile().params
-        r = conn.execute(_ins)
+    def add(self,title,code,taglist):
+        code_no = self.max_code_no() + 1
+        date = time.strftime("%Y-%m-%d %H:%M:%S")
+        ins = self.codetbl.insert().values(title=title,code=code,date=date)
+        ins.compile().params
+        conn = self.eng.connect()
+        r = conn.execute(ins)
+        self.add_tag_list(taglist,code_no)
 
-def modify(eng,tab,tagtbl,code_no,title,code,taglist):
+    def add_tag_list(self,taglist,code_no):
+        ins = self.taglist.insert()
+        conn = self.eng.connect()
+        for tag in taglist:
+            print 'add tag ',tag
+            _ins=ins.values(tag=tag,code_no=code_no)
+            _ins.compile().params
+            r = conn.execute(_ins)
+# not test
+    def modify(self,eng,tab,tagtbl,code_no,title,code,taglist):
 
-    conn = eng.connect()
-    stmt = tab.update().where(tab.c.code_no == code_no).values(title=title,code=code)
-    r = conn.execute(stmt)
+        conn = eng.connect()
+        stmt = tab.update().where(tab.c.code_no == code_no).values(title=title,code=code)
+        r = conn.execute(stmt)
 
 #    ins = tagtbl.insert()
 #    for tag in taglist:
@@ -62,64 +70,69 @@ def modify(eng,tab,tagtbl,code_no,title,code,taglist):
 #        r = conn.execute(_ins)
 
 
-def list_note(tab):
-    s = sqlalchemy.sql.select([tab])
+    def list_note(self):
+        s = sqlalchemy.sql.select([self.codetbl])
 
-    conn = eng.connect()
-    r = conn.execute(s)
-    print '..'
-    for row in r:
-        print row[0],row[1],row[3]
+        conn = self.eng.connect()
+        r = conn.execute(s)
+        print '..'
+        for row in r:
+            print row[0],row[1],row[3]
 
-def list_tag(tab):
-    s = sqlalchemy.sql.select([tab])
+    def list_tag(self):
+        s = sqlalchemy.sql.select([self.taglist])
 
-    conn = eng.connect()
-    r = conn.execute(s)
-    print '..'
-    tag_list = {} # tag tag_count
-    for row in r:
-        if tag_list.has_key(row['tag']) == True:
-            tag_list[row['tag']]+=1
-        else:
-            tag_list[row['tag']]=1
-        #print row['no'],row['tag']
+        conn = self.eng.connect()
+        r = conn.execute(s)
+        print '..'
+        tag_list = {} # tag tag_count
+        for row in r:
+            if tag_list.has_key(row['tag']) == True:
+                tag_list[row['tag']]+=1
+            else:
+                tag_list[row['tag']]=1
+            #print row['no'],row['tag']
 
-    for t in tag_list:
-        print t,tag_list[t]
-def list_one_note(tab,tagtbl,code_no):
-    s = sqlalchemy.sql.select([tab]).where(tab.c.code_no==code_no)
+        for t in tag_list:
+            print t,tag_list[t]
 
-    conn = eng.connect()
-    r = conn.execute(s)
-    row = r.fetchone()
-    print row[0]
-    print row[1]
-    print row[2]
-    print row[3]
+    def list_one_note(self,code_no):
+        s = sqlalchemy.sql.select([self.codetbl]).where(self.codetbl.c.code_no==code_no)
 
-    s = sqlalchemy.sql.select([tagtbl]).where(tagtbl.c.code_no==code_no)
-    conn = eng.connect()
-    r = conn.execute(s)
-    print "Tags: "
-    for row in r:
+        conn = self.eng.connect()
+        r = conn.execute(s)
+        row = r.fetchone()
+        print row[0]
         print row[1]
+        print row[2]
+        print row[3]
+        self.list_tag_by_code_no(code_no)
 
-    print '..'
+    def list_tag_by_code_no(self,code_no):
+        s = sqlalchemy.sql.select([self.taglist]).where(self.taglist.c.code_no==code_no)
+        conn = self.eng.connect()
+        r = conn.execute(s)
+        print "Tags: "
+        for row in r:
+            print row[1]
 
-def delete_note(eng,codetbl,tagtbl,code_no):
+        print '..'
 
-    conn = eng.connect()
-    r = conn.execute(codetbl.delete().where(codetbl.c.code_no == code_no))
-    r = conn.execute(tagtbl.delete().where(tagtbl.c.code_no == code_no))
+    def delete_note(self,code_no):
+        conn = self.eng.connect()
+        r = conn.execute(self.codetbl.delete().where(self.codetbl.c.code_no == code_no))
 
-def query(tab):
-    s = sqlalchemy.sql.select([tab])
+    def delete_tag_by_code_no(self,code_no):
+        conn = self.eng.connect()
+        r = conn.execute(self.taglist.delete().where(self.taglist.c.code_no == code_no))
 
-    conn = eng.connect()
-    r = conn.execute(s)
-    for row in r:
-        print row
+#def query(tab):
+#    s = sqlalchemy.sql.select([tab])
+#
+#    conn = eng.connect()
+#    r = conn.execute(s)
+#    for row in r:
+#        print row
 
 def new_note():
     title = raw_input("title :")
@@ -133,8 +146,21 @@ def new_note():
 
     return title,content,tag_list
 
-eng,codetbl,tagtbl = init("foo.db")
-
+#eng,codetbl,tagtbl = init("foo.db")
+note_db = note()
+note_db.init('note.db')
+#note_db.add('test','123',[1,2])
+#print 'list'
+#note_db.list_note()
+print 'list tag'
+note_db.list_tag()
+#note_db.list_one_note(2)
+#note_db.delete_note(2)
+note_db.delete_tag_by_code_no(3)
+print 'aftert delete'
+#note_db.list_note()
+note_db.list_tag()
+'''
 while True:
     print "1. new note"
     print "2. list note"
@@ -159,6 +185,9 @@ while True:
             list_one_note(codetbl,tagtbl,ich)
         except:
             print 'choice error'
+        print "modify tag"
+        tag_ch = raw_input()
+        
     elif ch == '3':
         list_tag(tagtbl)
     elif ch == '4':
@@ -186,3 +215,4 @@ while True:
         delete_note(eng,codetbl,tagtbl,ich)
     elif ch == 'q':
         break
+'''
