@@ -84,14 +84,12 @@ class note:
 
         conn = self.eng.connect()
         r = conn.execute(s)
-        print '..'
         tag_list = {} # tag tag_count
         for row in r:
             if tag_list.has_key(row['tag']) == True:
                 tag_list[row['tag']]+=1
             else:
                 tag_list[row['tag']]=1
-            #print row['no'],row['tag']
 
         for t in tag_list:
             print t,tag_list[t]
@@ -102,21 +100,19 @@ class note:
         conn = self.eng.connect()
         r = conn.execute(s)
         row = r.fetchone()
-        print row[0]
-        print row[1]
-        print row[2]
-        print row[3]
+        print 'title :',row["title"]
+        print 'code :',row['code']
+        print 'date :',row['date']
+        #print row[3]
         self.list_tag_by_code_no(code_no)
 
     def list_tag_by_code_no(self,code_no):
         s = sqlalchemy.sql.select([self.taglist]).where(self.taglist.c.code_no==code_no)
         conn = self.eng.connect()
         r = conn.execute(s)
-        print "Tags: "
+        print 'tags :'
         for row in r:
-            print row[1]
-
-        print '..'
+            print "\t",row[1]
 
     def delete_note(self,code_no):
         conn = self.eng.connect()
@@ -152,67 +148,66 @@ note_db.init('note.db')
 #note_db.add('test','123',[1,2])
 #print 'list'
 #note_db.list_note()
-print 'list tag'
-note_db.list_tag()
+#print 'list tag'
+#note_db.list_tag()
 #note_db.list_one_note(2)
 #note_db.delete_note(2)
-note_db.delete_tag_by_code_no(3)
-print 'aftert delete'
+#note_db.delete_tag_by_code_no(3)
+#print 'aftert delete'
 #note_db.list_note()
-note_db.list_tag()
-'''
+#note_db.list_tag()
 while True:
     print "1. new note"
     print "2. list note"
     print "3. list tag"
-    print "4. modify"
-    print "5. delete"
+#    print "4. modify"
+#    print "5. delete"
     print "q to quit"
     ch = raw_input(":")
     if ch == '1':
         title,content,tag_list = new_note()
         print title,content,tag_list
         #add(eng,codetbl,taglist,"123",'test',['1','2'])
-        add(eng,codetbl,tagtbl,title,content,tag_list)
+        note_db.add(title,content,tag_list)
     elif ch == '2':
 
         #query(codetbl)
         #query(taglist)
-        list_note(codetbl)
+        note_db.list_note()
         ch = raw_input('choose :')
         try:
             ich = int(ch)
-            list_one_note(codetbl,tagtbl,ich)
+            note_db.list_one_note(ich)
         except:
             print 'choice error'
+        print "modify "
         print "modify tag"
         tag_ch = raw_input()
         
     elif ch == '3':
         list_tag(tagtbl)
-    elif ch == '4':
-        list_note(codetbl)
-        ch = raw_input('choose :')
-        ich = int(ch)
-        try:
-            ich = int(ch)
-        except:
-            print 'delete choice error'
-        #modify input        
-        title,content,tag_list = new_note()
-
-        modify(eng,codetbl,tagtbl,ich,title,content,tag_list)
-
-    elif ch == '5':
-        list_note(codetbl)
-        ch = raw_input('choose :')
-        ich = int(ch)
-        try:
-            ich = int(ch)
-        except:
-            print 'delete choice error'
-
-        delete_note(eng,codetbl,tagtbl,ich)
+#    elif ch == '4':
+#        list_note(codetbl)
+#        ch = raw_input('choose :')
+#        ich = int(ch)
+#        try:
+#            ich = int(ch)
+#        except:
+#            print 'delete choice error'
+#        #modify input        
+#        title,content,tag_list = new_note()
+#
+#        modify(eng,codetbl,tagtbl,ich,title,content,tag_list)
+#
+#    elif ch == '5':
+#        list_note(codetbl)
+#        ch = raw_input('choose :')
+#        ich = int(ch)
+#        try:
+#            ich = int(ch)
+#        except:
+#            print 'delete choice error'
+#
+#        delete_note(eng,codetbl,tagtbl,ich)
     elif ch == 'q':
         break
-'''
